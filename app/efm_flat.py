@@ -287,7 +287,7 @@ def main(_argv):
         else:
             break
 
-    # # Generate EFM table
+    # Generate EFM table
     df, poss_moment_df = efm_table(
         N,
         [
