@@ -55,6 +55,10 @@ def get_valid_list_input(prompt):
             )
 
 
+def convert_input_to_list(input_string):
+    return list(map(int, input_string.split()))
+
+
 def add_sign(array):
     """
     Input: np.array([100, 50])
@@ -81,3 +85,22 @@ def multiply_row_by_array(df, column_name, row_namw, array):
     df.loc[df[column_name] == row_namw, df.columns[1:]] = new_fem_values
 
     return df
+
+
+# Inertia for L-Shape and Tee
+def isb(bw, bf, hw, hf):
+    A1 = bw * hw
+    A2 = bf * hf
+    d1 = hw / 2
+    d2 = hw + hf / 2
+
+    A = A1 + A2
+
+    yd = (A1 * d1 + A2 * d2) / A
+    print(f"\nNA = {yd:.0f} mm from bottom")
+
+    I1 = (1 / 12) * bw * pow(hw, 3) + A1 * (yd - d1) ** 2
+    I2 = (1 / 12) * bf * pow(hf, 3) + A2 * (yd - d2) ** 2
+    I = I1 + I2
+    # print(f"I = {I:.2e} mm4")
+    return I

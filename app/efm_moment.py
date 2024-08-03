@@ -114,7 +114,7 @@ def calculate_moment_at_support(num_spans, DF, COF, FEM, fem, num_iter):
     return df
 
 
-def calculate_reaction(num_spans, df, qu, l1, l2):
+def calculate_shear(num_spans, df, qu, l1, l2):
     """
     qu : area load in kN
     l1, l2 in m
@@ -173,7 +173,7 @@ def calculate_possitive_moment(num_spans, df, qu, l1, l2):
 
     # Generate column names based on joint names
     columns = ["Slab-Beam"]  # Set the first column name to "Slab-Beam"
-    for i in range(len(joints) - 1):
+    for i in range(len(joints) - 1):  # AB BC CD ...
         columns.append(f"{joints[i]}{joints[i + 1]}")
 
     # Create an empty DataFrame with the generated columns
@@ -215,8 +215,15 @@ def calculate_face_moments(columns, qu, l2, df):
         Mi = Mij[i]  # Adjust indexing for spans
         c1 = c1_values[i % len(c1_values)]  # Adjust indexing for spans
 
-        M_face_value = 0.5 * Vi * c1 - Mi - 0.5 * qu * l2 * (c1 / 2) * (c1 / 2)
-        V_face_value = (qu * l2 * c1 / 2) - Vi
+        # Rigth face
+        if i % 2 == 0:
+            M_face_value = 0.5 * Vi * c1 - Mi - 0.5 * qu * l2 * (c1 / 2) ** 2
+            V_face_value = (qu * l2 * c1 / 2) - Vi
+
+        # Left face
+        else:
+            M_face_value = -(-0.5 * Vi * c1 - Mi + 0.5 * qu * l2 * (c1 / 2) ** 2)
+            V_face_value = -((qu * l2 * c1 / 2) - Vi)
 
         M_face.append(M_face_value)
         V_face.append(V_face_value)
@@ -234,11 +241,8 @@ def efm_table(num_spans, columns, l1, l2, qu, df):
     qu : area load in kN
     l1, l2 in m
     """
-    # Multiply the 'M' row with the specified list (FEM) --> veM@support, kN-m
-    # df.iloc[-1, 1:] = df.iloc[-1, 1:].values * FEM
-
-    # Calculate reaction
-    Vu_df = calculate_reaction(num_spans, df, qu, l1, l2)
+    # Calculate shear
+    Vu_df = calculate_shear(num_spans, df, qu, l1, l2)
     df = pd.concat([df, Vu_df])
 
     # Calculate Max.M+ of each span

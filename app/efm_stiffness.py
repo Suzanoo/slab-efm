@@ -2,29 +2,9 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import griddata
 
-# from section import Rectangle
-# from rebar import Utils
+from utils import isb
 
 np.set_printoptions(precision=3)
-
-
-# Inertia for L-Shape and Tee
-def isb(bw, bf, hw, hf):
-    A1 = bw * hw
-    A2 = bf * hf
-    d1 = hw / 2
-    d2 = hw + hf / 2
-
-    A = A1 + A2
-
-    yd = (A1 * d1 + A2 * d2) / A
-    print(f"\nN.A. = {yd:.0f} mm from bottom")
-
-    I1 = (1 / 12) * bw * pow(hw, 3) + A1 * (yd - d1) ** 2
-    I2 = (1 / 12) * bf * pow(hf, 3) + A2 * (yd - d2) ** 2
-    I = I1 + I2
-    # print(f"I = {I:.2e} mm4")
-    return I
 
 
 # Ksb
@@ -106,7 +86,7 @@ class Slab_Beam_Stiffness:
         dp1A: width of drop-panel A, mm
         dp1B: width of drop-panel B , mm
         l1: span along C1A-C1B, mm
-        b: slab-beam strip width, mm
+        bs: slab-beam strip width, mm
         t: slab thickness, mm
         """
         Ec = 4700 * np.sqrt(fc)
@@ -142,25 +122,14 @@ class Slab_Beam_Stiffness:
 
         return Ksb, COF, FEM
 
-    def traverse_beam_interia(self, c1A, c1B, bw, h, t, l1, l2, fc, method="linear"):
+    def traverse_beam_interia(self, fc, c1A, c1B, l1, Is, Ib, method="linear"):
         """
         c1A: width of column A, mm
         c1B: width of column B , mm
         l1: span along C1A-C1B, mm
-        w: beam width, mm
-        h: beam depth, mm
-        b: slab-beam strip width, mm
-        t: slab thickness, mm
         """
-        hf = t
-        hw = h - hf
-        bf = bw + 2 * min(hw, 4 * t)
-        bs = l2
 
         Ec = 4700 * np.sqrt(fc)
-        Is = (1 / 12) * bs * pow(hf, 3)
-        # Ib = self.rect.moment_of_inertia(bw, hw) # TODO why 1.5
-        Ib = isb(bw, bf, hw, hf)
 
         print(f"Slab-Beam Stiffness Factors: Slab with Beam Traverse")
         print(f"c1A/l1 = {c1A/l1:.4f}")
@@ -191,7 +160,7 @@ class Slab_Beam_Stiffness:
 
         return Ksb, COF, FEM
 
-    def traverse_beam_exteria(self, c1A, c1B, bw, h, t, l1, l2, fc, method="linear"):
+        # def traverse_beam_exteria(self, c1A, c1B, bw, h, t, l1, l2, fc, method="linear"):
         """
         c1A: width of column A, mm
         c1B: width of column B , mm
@@ -202,7 +171,7 @@ class Slab_Beam_Stiffness:
         t: slab thickness, mm
         """
         bs = l2 / 2
-        b = bs + bw / 2
+        # b = bs + bw / 2
 
         hf = t
         hw = h - hf

@@ -16,10 +16,14 @@ from efm_moment import (
 )
 
 from utils import to_numpy, is_number, get_valid_integer, get_valid_list_input, add_sign
+from design_reinf import design
 
 flags.DEFINE_float("E", 2000000, "MPa")
 flags.DEFINE_float("fc1", 25, "Concrete strength for slab and beam, MP")
 flags.DEFINE_float("fc2", 35, "Concrete strength for column, MPa")
+flags.DEFINE_float("fy", 390, "Yeild strength for main reinforcement, MPa")
+flags.DEFINE_float("fv", 235, "Yeild strength for traverse , MPa")
+flags.DEFINE_float("c", 3, "Concrete covering , cm")
 
 flags.DEFINE_float("t", 0, "slab thickness , mm")
 
@@ -39,37 +43,50 @@ def frame_data():
 
     # l1 (span length)
     while True:
-        try:
-            span = get_valid_list_input(
-                "Define array of spans(l1) in meters, ex 4 4 5: "
-            )
-            span = span * 1e3  # Convert to numpy array in mm
-
-            if span.size == N:
-                print(f"span = {span} mm")
-                break
-            else:
-                print(
-                    f"You need to define exactly {N} spans. You provided {span.size}. Try again."
+        while True:
+            try:
+                span = get_valid_list_input(
+                    "Define array of spans(l1) in meters, ex 4 4 5: "
                 )
-        except ValueError as e:
-            print(f"Input error: {e}. Please try again.")
-        except Exception as e:
-            print(f"Unexpected error: {e}. Please try again.")
+                span = span * 1e3  # Convert to numpy array in mm
+
+                if span.size == N:
+                    print(f"span = {span} mm")
+                    break
+                else:
+                    print(
+                        f"You need to define exactly {N} spans. You provided {span.size}. Try again."
+                    )
+            except ValueError as e:
+                print(f"Input error: {e}. Please try again.")
+            except Exception as e:
+                print(f"Unexpected error: {e}. Please try again.")
+
+        ask = input("Try again! Y|N : ").upper()
+        if ask == "Y":
+            pass
+        else:
+            break
 
     # Column Type
     print(f"\nColumn Type Definition S = Square or Rectangle, C = Circle")
 
     # Column type Square, Rectangle, Circle
     column_type = []
-    for i in range(0, N + 1):
-        while True:
-            c = input(f"Column type for  C{i + 1} s|c : ").upper()
-            if c in ["S", "C"]:
-                column_type.append(c)
-                break
-            else:
-                print(f"Wrong type, Try again")
+    while True:
+        for i in range(0, N + 1):
+            while True:
+                c = input(f"Column type for  C{i + 1} s|c : ").upper()
+                if c in ["S", "C"]:
+                    column_type.append(c)
+                    break
+                else:
+                    print(f"Wrong type, Try again")
+        ask = input("Try again! Y|N : ").upper()
+        if ask == "Y":
+            column_type = []
+        else:
+            break
 
     # Column dimension prompt
     print(f"\nColumn dimension represented by c1 x c2.")
@@ -79,22 +96,28 @@ def frame_data():
 
     columns = []
     # [array([400., 400.]), array([400., 400.]), array([400., 400.])]
-    for i in range(0, N + 1):
-        while True:
-            c = input(
-                f"Define dimension (c1 x c2) for column {i + 1} in cm, ex. 40 60: "
-            )
-            try:
-                c = to_numpy(c) * 10  # convert to mm
-                if c.size == 2:
-                    columns.append(c)
-                    break
-                else:
-                    print(
-                        "Invalid input. Please enter exactly two dimensions separated by a space, e.g., '40 60'."
-                    )
-            except ValueError as e:
-                print(f"Input error: {e}. Please enter valid numeric dimensions.")
+    while True:
+        for i in range(0, N + 1):
+            while True:
+                c = input(
+                    f"Define dimension (c1 x c2) for column {i + 1} in cm, ex. 40 60: "
+                )
+                try:
+                    c = to_numpy(c) * 10  # convert to mm
+                    if c.size == 2:
+                        columns.append(c)
+                        break
+                    else:
+                        print(
+                            "Invalid input. Please enter exactly two dimensions separated by a space, e.g., '40 60'."
+                        )
+                except ValueError as e:
+                    print(f"Input error: {e}. Please enter valid numeric dimensions.")
+        ask = input("Try again! Y|N : ").upper()
+        if ask == "Y":
+            columns = []
+        else:
+            break
 
     return N, span, columns, column_type
 
@@ -134,7 +157,7 @@ def factor(span, columns, column_type):
             COF.append(cof)
             FEM.append(fem)
 
-        ask = input(f"\nChange intepolation method? ,  Y|N : ").upper()
+        ask = input(f"\nIntepolation again? ,  Y|N : ").upper()
         if ask != "Y":
             break
         else:
@@ -172,7 +195,7 @@ def factor(span, columns, column_type):
 
             print(f"Kec = {kec:.2e} N-mm")
 
-        ask = input(f"\nChange intepolation method? ,  Y|N : ").upper()
+        ask = input(f"\nIntepolation metagainhod? ,  Y|N : ").upper()
         if ask != "Y":
             break
         else:
@@ -301,6 +324,14 @@ def main(_argv):
 
     calculate_design_moments(df, poss_moment_df)
 
+    # Design reinforcement
+    print(f"\n==========Design Reinforcement==========")
+    ask = input("Do you want to design reinforcement? Y|N : ").upper
+    if ask != "Y":
+        pass
+    else:
+        design(FLAGS.fc1, FLAGS.fy, FLAGS.fv, FLAGS.l2 * 1e-3, FLAGS.t * 1e-3, FLAGS.c)
+
 
 if __name__ == "__main__":
     app.run(main)
@@ -308,10 +339,6 @@ if __name__ == "__main__":
 
 # --------------------------------------------------------------------
 """
-How to used?
--Please see FLAGS definition for unit informations
--Make sure you are in the project directory run python in terminal(Mac) or command line(Windows)
 -Run app  
     % python app/efm_flat.py --t=190 --l2=4500 --lc=2750 --fc1=20 --fc2=35
-
 """

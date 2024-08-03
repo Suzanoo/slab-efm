@@ -2,12 +2,12 @@
 Equivalent Frame Method for Flat Slab with Traverse Beam : Interior Strip
 """
 
-import re
 import numpy as np
 
 from absl import app, flags
 from absl.flags import FLAGS
 
+np.set_printoptions(precision=3)
 
 flags.DEFINE_float("E", 2000000, "MPa")
 flags.DEFINE_float("fc1", 25, "Concrete strength for slab and beam, MP")
@@ -20,6 +20,8 @@ flags.DEFINE_float("t", 0, "slab thickness , mm")
 flags.DEFINE_float("l2", 0, "span , mm")
 flags.DEFINE_float("lc", 0, "story heigth, mm")
 
+flags.DEFINE_string("type", "int", "Interior or Exterior beam")
+
 METHOD = {"1": "linear", "2": "nearest", "3": "cubic"}
 
 from efm_stiffness import Slab_Beam_Stiffness, Column_Stiffness, Torsion_Stiffness
@@ -29,7 +31,14 @@ from efm_moment import (
     efm_table,
     calculate_design_moments,
 )
-from utils import to_numpy, is_number, get_valid_integer, get_valid_list_input, add_sign
+from utils import (
+    to_numpy,
+    is_number,
+    get_valid_integer,
+    get_valid_list_input,
+    add_sign,
+    isb,
+)
 
 
 def frame_data():
@@ -93,7 +102,7 @@ def frame_data():
     return N, span, columns, column_type
 
 
-def factor(span, columns, column_type):
+def factor(span, columns, column_type, Is, Ib):
     sb = Slab_Beam_Stiffness()
     cs = Column_Stiffness()
     ts = Torsion_Stiffness(FLAGS.fc2)
@@ -124,7 +133,7 @@ def factor(span, columns, column_type):
             c2B = columns[i + 1][1]
 
             ksb, cof, fem = sb.traverse_beam_interia(
-                c1A, c1B, FLAGS.bw, FLAGS.h, FLAGS.t, l1, FLAGS.l2, FLAGS.fc1, method
+                FLAGS.fc1, c1A, c1B, l1, Is, Ib, method
             )
 
             Ksb.append(ksb)
@@ -244,7 +253,7 @@ def main(_argv):
     print(
         "======================== Equivalent Frame Method, EFM ========================"
     )
-    print(f"\n[INFO], Flat slab design use EFM method]")
+    print(f"\n[INFO], Flat slab with traverse beam design use EFM method]")
     print(f"\n1.Give information :")
     print("2.See EFM_Method.pdf for more information :")
     print("3.Interpolate slab-beam stiffness from table :")
@@ -258,7 +267,21 @@ def main(_argv):
     N, span, columns, column_type = frame_data()
 
     # Get coefficients
-    DF, COF, FEM = factor(span, columns, column_type)
+    hf = FLAGS.t
+    hw = FLAGS.h - hf
+
+    # Interior = Tee beam
+    if FLAGS.type == "int":
+        bf = FLAGS.bw + 2 * min(hw, 4 * FLAGS.t)
+        Is = (1 / 12) * FLAGS.l2 * pow(FLAGS.t, 3)
+    # Exterior = L-beam
+    else:
+        bf = FLAGS.bw + min(hw, 4 * FLAGS.t)
+        Is = (1 / 12) * (FLAGS.l2 / 2) * pow(FLAGS.t, 3)
+
+    Ib = isb(FLAGS.bw, bf, hw, hf)
+
+    DF, COF, FEM = factor(span, columns, column_type, Is, Ib)
 
     print(f"\n==========EFM Table==========")
     # Define area load
@@ -318,4 +341,5 @@ if __name__ == "__main__":
 # --------------------------------------------------------------------
 """ 
     % python app/efm_tb.py --bw=250 --h=500 --t=150 --l2=5000 --lc=3000 --fc1=25 --fc2=35
+    % python app/efm_tb.py --bw=250 --h=500 --t=150 --l2=5000 --lc=3000 --fc1=25 --fc2=35 --type=ext
 """
