@@ -33,8 +33,8 @@ from efm_moment import (
 )
 from utils import (
     to_numpy,
-    is_number,
     get_valid_integer,
+    get_valid_number,
     get_valid_list_input,
     add_sign,
     isb,
@@ -285,12 +285,7 @@ def main(_argv):
 
     print(f"\n==========EFM Table==========")
     # Define area load
-    while True:
-        qu = float(input("Define qu(1.4DL+ 1.7LL) , kN/m2 : "))
-        if is_number(qu):
-            break
-        else:
-            print("The input is not a number.Try again!")
+    qu = get_valid_number("Define qu(1.4DL+ 1.7LL) , kN/m2 : ")
 
     # Calculate Fixedd End Moment
     fem = []

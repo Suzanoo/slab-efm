@@ -15,8 +15,15 @@ from efm_moment import (
     calculate_design_moments,
 )
 
-from utils import to_numpy, is_number, get_valid_integer, get_valid_list_input, add_sign
-from design_reinf import design
+from utils import (
+    to_numpy,
+    get_valid_number,
+    get_valid_integer,
+    get_valid_list_input,
+    add_sign,
+)
+from design_reinf import design_reinf
+from punching_shear import punching
 
 flags.DEFINE_float("E", 2000000, "MPa")
 flags.DEFINE_float("fc1", 25, "Concrete strength for slab and beam, MP")
@@ -195,7 +202,7 @@ def factor(span, columns, column_type):
 
             print(f"Kec = {kec:.2e} N-mm")
 
-        ask = input(f"\nIntepolation metagainhod? ,  Y|N : ").upper()
+        ask = input(f"\nIntepolation again? ,  Y|N : ").upper()
         if ask != "Y":
             break
         else:
@@ -257,14 +264,15 @@ def main(_argv):
         "======================== Equivalent Frame Method, EFM ========================"
     )
     print(f"\n[INFO], Flat slab design use EFM method]")
-    print(f"\n1.Give information :")
-    print("2.See EFM_Method.pdf for more information :")
-    print("3.Interpolate slab-beam stiffness from table :")
-    print("4.Interpolate column stiffness from table :")
-    print("5.Calculate negative moment at support, M-  :")
-    print("6.Calculate possitive moment, M+, :")
-    print("7.Calculate Reaction :")
-    print("8.Calculate M and V at column face :")
+    print("See EFM_Method.pdf for more information :")
+
+    print(f"\n-.Give information :")
+    print("-Interpolate slab-beam stiffness from table :")
+    print("-Interpolate column stiffness from table :")
+    print("-Calculate negative moment at support, M-  :")
+    print("-Calculate possitive moment, M+, :")
+    print("-Calculate Shear at support :")
+    print("-Calculate M and V at column face :")
 
     #
     print(f"\n==========Information==========")
@@ -275,12 +283,7 @@ def main(_argv):
 
     print(f"\n==========EFM Table==========")
     # Define area load
-    while True:
-        qu = float(input("Define qu(1.4DL+ 1.7LL) , kN/m2 : "))
-        if is_number(qu):
-            break
-        else:
-            print("The input is not a number.Try again!")
+    qu = get_valid_number("Define qu(1.4DL+ 1.7LL) , kN/m2 : ")
 
     # Calculate Fixedd End Moment
     fem = []
@@ -297,10 +300,10 @@ def main(_argv):
         f"\n[INFO] Next is moment distribution iteration. Distribute util all carry over moment = 0"
     )
     while True:
-        N_values = get_valid_integer("How many iteration time? 10 is max! : ")
+        N_values = get_valid_integer("How many iteration time? 15 is max! : ")
 
         # Limit 10 times for iteration
-        num_iter = 10 if N_values > 10 else N_values
+        num_iter = 15 if N_values > 15 else N_values
 
         df = calculate_moment_at_support(N, DF, COF, FEM, fem, num_iter)
 
@@ -322,15 +325,22 @@ def main(_argv):
         df,
     )
 
-    calculate_design_moments(df, poss_moment_df)
+    df = calculate_design_moments(df, poss_moment_df)
 
     # Design reinforcement
     print(f"\n==========Design Reinforcement==========")
-    ask = input("Do you want to design reinforcement? Y|N : ").upper
-    if ask != "Y":
-        pass
-    else:
-        design(FLAGS.fc1, FLAGS.fy, FLAGS.fv, FLAGS.l2 * 1e-3, FLAGS.t * 1e-3, FLAGS.c)
+    ask = input("Do you want to design reinforcement? Y|N : ").upper()
+    if ask == "Y":
+        design_reinf(
+            FLAGS.fc1, FLAGS.fy, FLAGS.fv, FLAGS.l2 * 1e-1, FLAGS.t * 1e-1, FLAGS.c
+        )
+
+    # Check punching shear
+    ask = input(f"\nDo you want to check punching sheart? Y|N : ").upper()
+    if ask == "Y":
+        punching(FLAGS.fc1)
+
+    print("======================== ********** ========================")
 
 
 if __name__ == "__main__":
@@ -341,4 +351,5 @@ if __name__ == "__main__":
 """
 -Run app  
     % python app/efm_flat.py --t=190 --l2=4500 --lc=2750 --fc1=20 --fc2=35
+    % python app/efm_flat.py --t=240 --l2=3000 --lc=2750 --fc1=35 --fc2=35
 """

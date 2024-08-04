@@ -1,36 +1,29 @@
 import os
+import numpy as np
 import pandas as pd
 
 from beam_class import Beam
 
-
-from utils import display_df, convert_input_to_list
-from plot_section import create_html
+from utils_df import display_df
 
 
 # ----------------------------------
-def design(fc, fy, fv, b, t, c):
+def design_reinf(fc, fy, fv, b, t, c):
     """
+    fc, fv in MPa
     b: width in cm
     t: thickness in cm
     c: covering in cm
     """
     CURRENT = os.getcwd()
 
+    print(f"\nGEOMETRY")
+    print(f"Column strip = {b/2} cm, thickness = {t} cm,")
+    print(f"Molumn strip = {b/2} cm, thickness = {t} cm,")
+
     # Trials
     main_reinf = 12
     trav_reinf = 9
-
-    print(f"\n==========Design reinforcement==========")
-
-    # print("PROPERTIES")
-    # print(
-    #     f"f'c = {fc} Mpa, fy = {fy} Mpa, fv = {fv} MPa, Es = {Es:.0f} MPa"
-    # )
-    # print(f"𝜙b = {𝜙b}, 𝜙v = {𝜙v}")
-
-    # print(f"\nGEOMETRY")
-    # print(f"b = {b} cm, t = {t} cm,")
 
     # instanciate
     beam = Beam(fc, fy, fv, c)
@@ -45,22 +38,14 @@ def design(fc, fy, fv, b, t, c):
     # --------------------------------
     ## Design
     # --------------------------------
-    N = []
-    main_reinf = []
-    traverse_reinf = []
-    # spacing = []
-    n = 1
-
     # Display rebar df
     table = os.path.join(CURRENT, "data/Deform_Bar.csv")
-    df = pd.read_csv(table)
-    display_df(df)
+    rebar_df = pd.read_csv(table)
+    display_df(rebar_df)
 
-    # Design reinforce
     while True:
-        print(f"\n--------------- SECTION-{n} -----------------")
-        Mu = float(input("Define Mu in kN-m : "))
-        # Vu = float(input("Define Vu in kN : "))
+        # Define Mu
+        Mu = float(input("See Distribute Design Moment and efine Mu in kN-m : "))
 
         # Check classification
         classify = beam.classification(Mu, 𝜙Mn1)
@@ -71,55 +56,10 @@ def design(fc, fy, fv, b, t, c):
         # Design main reinf
         no, main_dia, As_main = beam.main_design(data)
 
-        # Design traverse
-        # traverse_dia, Av, s = beam.traverse_design(d, Vu)
-
-        # Collect for plotting
-        N.append(no)
-        main_reinf.append(main_dia)
-        # traverse_reinf.append(traverse_dia)
-        # spacing.append(s)
+        print(f"Dia-{main_dia}mm @{np.ceil(b/no)} cm")
 
         ask = input("Design another section! Y|N :").upper()
         if ask == "Y":
-            n += n
+            pass
         else:
             break
-
-    # Lay rebars in each layer
-    bottom_reinf = []
-    top_reinf = []
-    middle_reinf = []
-
-    print(f"\nYou have {n} section. Next is to locate the rebars step :  ")
-    ask = input("Do you want to change number of section to display  ! Y|N : ")
-    if ask == "Y":
-        n = int(input("New n = ? : "))
-
-    for i in range(n):
-        bott = convert_input_to_list(
-            input(f"Section-{i+1}, Lay rebars in bottom layer, ex. 3 2 : ")
-        )
-        top = convert_input_to_list(
-            input(f"Section-{i+1}, Lay rebars in top layer, ex. 3 2 : ")
-        )
-        # middle = int(
-        #     input(f"Section-{i+1}, How many middle rebar? Even numbers only, ex. 4 : ")
-        # )
-        # TODO check middle is even number
-        bottom_reinf.append(bott)
-        top_reinf.append(top)
-        # middle_reinf.append(middle)
-
-    # create_html(
-    #     None,
-    #     n,
-    #     b,
-    #     t,
-    #     c,
-    #     traverse_reinf,
-    #     main_reinf,
-    #     bottom_reinf,
-    #     top_reinf,
-    #     middle_reinf,
-    # )

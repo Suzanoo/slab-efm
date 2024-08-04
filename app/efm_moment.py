@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from utils import display_df, multiply_row_by_array
+from utils_df import display_df, multiply_row_by_array
 
 
 def calculate_fixend_moment(qu, l1, l2):
@@ -317,8 +317,4 @@ def calculate_design_moments(neg_moment_df, poss_moment_df):
     print(f"\nDistribute Design Moment:")
     display_df(new_df)
 
-
-"""
-
-
-"""
+    return new_df

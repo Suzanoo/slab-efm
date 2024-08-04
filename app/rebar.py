@@ -22,6 +22,9 @@ class Rebar:
             "32": 6.313,
         }  # cm2
 
+    def __str__(self):
+        return f"{self.N} - ø{self.dia}mm"
+
     def rebar_selected(self):
         while True:
             dia = input(f"Select Diameter  = ? : ")
@@ -33,13 +36,15 @@ class Rebar:
     def rebar_design(self, As):
         while True:
             print(f"As required = {As:.2f} cm2, please select")
-            dia, A = self.rebar_selected()
-            N = int(input("Quantities N = ? : "))
+            self.dia, A = self.rebar_selected()
+            self.N = int(input("Quantities N = ? : "))
 
-            if N * A > As:
-                print(f"Reinforcment : {N} - ø{dia} mm = {N * A:.2f} cm2")
-                return N, dia, N * A
+            if self.N * A > As:
+                print(
+                    f"Reinforcment : {self.N} - ø{self.dia} mm = {self.N * A:.2f} cm2"
+                )
+                return self.N, self.dia, self.N * A
             else:
                 print(
-                    f"As provide : {N} - ø{dia} mm = {N * A:.2f} cm2 < {As:.2f} cm2, Try again!"
+                    f"As provide : {self.N} - ø{self.dia} mm = {self.N * A:.2f} cm2 < {As:.2f} cm2, Try again!"
                 )
