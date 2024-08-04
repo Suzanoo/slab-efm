@@ -98,7 +98,7 @@ def calculate_moment_at_support(num_spans, DF, COF, FEM, fem, num_iter):
         COM = calculate_carry_over_moment(COF_row, df.iloc[-1].values[1:])
 
         # Fill row with calculated COM values
-        df.loc[(2 * i + 2), "Slab-Beam"] = "Carry Over"
+        df.loc[(2 * i + 2), "Slab-Beam"] = "Carry-over"
         df.loc[(2 * i + 2), df.columns[1:]] = COM
 
     # Sum each column starting from FEM row

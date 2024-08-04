@@ -248,7 +248,7 @@ class Column_Stiffness:
         return interpolated_df
 
     # Column stiffness(Kc)
-    def kc(self, c1A, lc, Ic, fc, method="linear"):
+    def kc(self, c1A, lc, Ic, fc, roof=False, method="linear"):
         """
         Warning !!!
 
@@ -264,11 +264,16 @@ class Column_Stiffness:
         a = ["K.AB", "K.BA"]
         b = ["bot", "top"]
         Kc = []
-        for i in range(0, len(a)):
-            k = df.at[0, a[i]]
-            kc = k * Ec * Ic / lc
-            Kc.append(kc)
-            print(f"Kc.{b[i]} = {kc:.2e} N/mm2")
+        for i in range(len(a)):
+            if i == 1 and roof == True:
+                Kc.append(0)
+                print(f"Kc.{b[i]} = 0 N/mm2")
+            else:
+                k = df.at[0, a[i]]
+                kc = k * Ec * Ic / lc
+                Kc.append(kc)
+                print(f"Kc.{b[i]} = {kc:.2e} N/mm2")
+
         return Kc
 
 

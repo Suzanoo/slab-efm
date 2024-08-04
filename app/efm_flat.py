@@ -37,6 +37,8 @@ flags.DEFINE_float("t", 0, "slab thickness , mm")
 flags.DEFINE_float("l2", 0, "span , mm")
 flags.DEFINE_float("lc", 0, "story heigth, mm")
 
+flags.DEFINE_boolean("roof", False, "Roof top or floor")
+
 np.set_printoptions(precision=3)
 
 
@@ -194,7 +196,11 @@ def factor(span, columns, column_type):
                 else (1 / 64) * np.pi * pow(c1A, 4)
             )  # mm4
 
-            Kc = cs.kc(FLAGS.t, FLAGS.lc, Ic, FLAGS.fc2, method)
+            if FLAGS.roof == False:
+                Kc = cs.kc(FLAGS.t, FLAGS.lc, Ic, FLAGS.fc2, method)
+            else:
+                Kc = cs.kc(FLAGS.t, FLAGS.lc, Ic, FLAGS.fc2, roof=True, method=method)
+
             Kt = ts.flat(c1A, c2A, FLAGS.t, FLAGS.l2)
 
             kec = 1 / ((1 / sum(Kc)) + (1 / (2 * Kt)))
@@ -350,5 +356,5 @@ if __name__ == "__main__":
 """
 -Run app  
     % python app/efm_flat.py --t=190 --l2=4500 --lc=2750 --fc1=20 --fc2=35
-    % python app/efm_flat.py --t=240 --l2=3000 --lc=2750 --fc1=35 --fc2=35
+    % python app/efm_flat.py --t=240 --l2=3000 --lc=2750 --fc1=35 --fc2=35 --roof=True
 """
