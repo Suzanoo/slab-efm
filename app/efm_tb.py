@@ -7,23 +7,6 @@ import numpy as np
 from absl import app, flags
 from absl.flags import FLAGS
 
-np.set_printoptions(precision=3)
-
-flags.DEFINE_float("E", 2000000, "MPa")
-flags.DEFINE_float("fc1", 25, "Concrete strength for slab and beam, MP")
-flags.DEFINE_float("fc2", 35, "Concrete strength for column, MPa")
-
-flags.DEFINE_float("bw", 0, "beam width , mm")
-flags.DEFINE_float("h", 0, "beam depth , mm")
-flags.DEFINE_float("t", 0, "slab thickness , mm")
-
-flags.DEFINE_float("l2", 0, "span , mm")
-flags.DEFINE_float("lc", 0, "story heigth, mm")
-
-flags.DEFINE_string("type", "int", "Interior or Exterior beam")
-
-METHOD = {"1": "linear", "2": "nearest", "3": "cubic"}
-
 from efm_stiffness import Slab_Beam_Stiffness, Column_Stiffness, Torsion_Stiffness
 from efm_moment import (
     calculate_fixend_moment,
@@ -39,6 +22,29 @@ from utils import (
     add_sign,
     isb,
 )
+
+from design_reinf import Design
+from punching_shear import punching
+
+np.set_printoptions(precision=3)
+
+flags.DEFINE_float("E", 2000000, "MPa")
+flags.DEFINE_float("fc1", 25, "Concrete strength for slab and beam, MP")
+flags.DEFINE_float("fc2", 35, "Concrete strength for column, MPa")
+flags.DEFINE_float("fy", 390, "Yeild strength for main reinforcement, MPa")
+flags.DEFINE_float("fv", 235, "Yeild strength for traverse , MPa")
+flags.DEFINE_float("c", 2.5, "Concrete covering , cm")
+
+flags.DEFINE_float("bw", 0, "beam width , mm")
+flags.DEFINE_float("h", 0, "beam depth , mm")
+flags.DEFINE_float("t", 0, "slab thickness , mm")
+
+flags.DEFINE_float("l2", 0, "span , mm")
+flags.DEFINE_float("lc", 0, "story heigth, mm")
+
+flags.DEFINE_string("type", "int", "Interior or Exterior beam")
+
+METHOD = {"1": "linear", "2": "nearest", "3": "cubic"}
 
 
 def frame_data():
@@ -328,6 +334,29 @@ def main(_argv):
     )
 
     calculate_design_moments(df, poss_moment_df)
+
+    # Design reinforcement
+    print(f"\n==========Design Reinforcement==========")
+    ask = input("Do you want to design reinforcement? Y|N : ").upper()
+    if ask == "Y":
+        print("M- for drop panel, M+ for slab design : ")
+        design = Design(FLAGS.fc1, FLAGS.fv, FLAGS.fy, FLAGS.c)
+
+        print("Design beam")
+        design.design_drop(
+            FLAGS.bw * 1e-1,
+            FLAGS.h * 1e-1,
+        )
+
+        print("Design slab")
+        design.design_slab(FLAGS.l2 * 1e-1, FLAGS.t * 1e-1)
+
+    # Check punching shear
+    ask = input(f"\nDo you want to check punching sheart? Y|N : ").upper()
+    if ask == "Y":
+        punching(FLAGS.fc1)
+
+    print("======================== ********** ========================")
 
 
 if __name__ == "__main__":

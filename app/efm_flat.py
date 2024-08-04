@@ -22,7 +22,7 @@ from utils import (
     get_valid_list_input,
     add_sign,
 )
-from design_reinf import design_reinf
+from design_reinf import Design
 from punching_shear import punching
 
 flags.DEFINE_float("E", 2000000, "MPa")
@@ -30,7 +30,7 @@ flags.DEFINE_float("fc1", 25, "Concrete strength for slab and beam, MP")
 flags.DEFINE_float("fc2", 35, "Concrete strength for column, MPa")
 flags.DEFINE_float("fy", 390, "Yeild strength for main reinforcement, MPa")
 flags.DEFINE_float("fv", 235, "Yeild strength for traverse , MPa")
-flags.DEFINE_float("c", 3, "Concrete covering , cm")
+flags.DEFINE_float("c", 2.5, "Concrete covering , cm")
 
 flags.DEFINE_float("t", 0, "slab thickness , mm")
 
@@ -266,7 +266,7 @@ def main(_argv):
     print(f"\n[INFO], Flat slab design use EFM method]")
     print("See EFM_Method.pdf for more information :")
 
-    print(f"\n-.Give information :")
+    print(f"\n-Give information :")
     print("-Interpolate slab-beam stiffness from table :")
     print("-Interpolate column stiffness from table :")
     print("-Calculate negative moment at support, M-  :")
@@ -331,9 +331,8 @@ def main(_argv):
     print(f"\n==========Design Reinforcement==========")
     ask = input("Do you want to design reinforcement? Y|N : ").upper()
     if ask == "Y":
-        design_reinf(
-            FLAGS.fc1, FLAGS.fy, FLAGS.fv, FLAGS.l2 * 1e-1, FLAGS.t * 1e-1, FLAGS.c
-        )
+        design = Design(FLAGS.fc1, FLAGS.fv, FLAGS.fy, FLAGS.c)
+        design.design_slab(FLAGS.l2 * 1e-1, FLAGS.t * 1e-1)
 
     # Check punching shear
     ask = input(f"\nDo you want to check punching sheart? Y|N : ").upper()
