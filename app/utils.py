@@ -30,22 +30,25 @@ def get_valid_integer(prompt):
             print("Invalid input. Please enter a valid number.")
 
 
+
 def get_valid_list_input(prompt):
     while True:
         user_input = input(prompt)
         try:
-            span_array = to_numpy(user_input)
-            if len(span_array) == 0:
+            array = to_numpy(user_input)
+            if len(array) == 0:
                 raise ValueError("No valid numbers found.")
-            return span_array
+            return array
         except ValueError as e:
             print(
                 f"Invalid input: {e}. Please enter a space-separated list of numbers."
             )
 
 
+
 def convert_input_to_list(input_string):
     return list(map(int, input_string.split()))
+
 
 
 def add_sign(array):
@@ -61,6 +64,7 @@ def add_sign(array):
         result.append(-array[i])  # Negative moment at the end of the span
 
     return np.array(result)
+
 
 
 # Inertia for L-Shape and Tee

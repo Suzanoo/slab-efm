@@ -1,7 +1,6 @@
 # OOP for Beam
 import numpy as np
 
-
 # from shear import ShearReinforcement
 from rebar import Rebar
 
